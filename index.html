@@ -21,19 +21,19 @@
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5efe7;
+            background-color: var(--gladstart-bg);
             text-align: center;
         }
         .logo {
-            width: 180px;
-            margin: 20px auto 40px;
+            width: 120px; /* Reduced size */
+            margin: 10px auto 20px; /* Reduced margins */
         }
         header {
-            margin-bottom: 2rem;
+            margin-bottom: 1rem; /* Reduced bottom margin */
         }
         h1 {
             color: var(--gladstart-brown);
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             font-size: 1.8rem;
         }
         .date-display {
@@ -78,6 +78,13 @@
             font-size: 0.9rem;
             color: var(--gladstart-text-secondary);
             text-align: right;
+        }
+        .event-source a {
+            color: var(--gladstart-orange);
+            text-decoration: none;
+        }
+        .event-source a:hover {
+            text-decoration: underline;
         }
         .region-badge {
             display: inline-block;
@@ -162,7 +169,7 @@
 <body>
     <header>
         <div class="logo">
-            <img src="gladstart-logo.png" alt="GLADSTART Logo" width="180">
+            <img src="gladstart-logo.png" alt="GLADSTART Logo" width="120">
         </div>
         <h1>Historiska händelser i dag</h1>
         <div class="date-display" id="currentDate">Laddar dagens datum...</div>
@@ -181,13 +188,13 @@
 
     <footer>
         <div class="social-icons">
-            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" aria-label="Facebook" target="_blank"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" aria-label="Twitter" target="_blank"><i class="fab fa-twitter"></i></a>
+            <a href="#" aria-label="Instagram" target="_blank"><i class="fab fa-instagram"></i></a>
+            <a href="#" aria-label="LinkedIn" target="_blank"><i class="fab fa-linkedin-in"></i></a>
         </div>
         <div class="copyright">
-            ©2025 GladStart | <a href="#">Användarvillkor</a> | <a href="#">Integritetspolicy</a>
+            ©2025 GladStart | <a href="#" target="_blank">Användarvillkor</a> | <a href="#" target="_blank">Integritetspolicy</a>
         </div>
         <div style="margin-top: 10px; font-size: 0.8rem;">
             This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply.
@@ -197,6 +204,30 @@
     <script>
         // Path to your JSON data file
         const DATA_PATH = 'data/historical_events.json';
+        
+        // Region names in Swedish
+        const regionTranslations = {
+            'Sweden': 'Sverige',
+            'Nordic': 'Norden',
+            'Europe': 'Europa',
+            'Global': 'Global'
+        };
+        
+        // Create Wikipedia URL based on language and title
+        function createWikipediaUrl(language, title) {
+            // For Swedish Wikipedia
+            if (language && language.includes('sv')) {
+                return `https://sv.wikipedia.org/wiki/${encodeURIComponent(title.replace(/\s/g, '_'))}`;
+            }
+            // For English Wikipedia
+            else if (language && language.includes('en')) {
+                return `https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/\s/g, '_'))}`;
+            }
+            // Default to Swedish
+            else {
+                return `https://sv.wikipedia.org/wiki/Huvudsida`;
+            }
+        }
         
         // Format date as Month Day (e.g., "14 mars")
         function formatDate(date) {
@@ -225,24 +256,32 @@
             };
         }
         
-        // Filter events for the current date
+        // Filter events for the current date (only Swedish and English)
         function filterEventsForDate(events, month, day) {
             return events.filter(event => 
-                event.month === month && event.day === day
+                event.month === month && 
+                event.day === day && 
+                (!event.language || event.language.includes('sv') || event.language.includes('en'))
             );
         }
         
         // Create HTML for a single event
         function createEventHTML(event) {
+            // Translate region name to Swedish
+            const regionName = regionTranslations[event.region] || event.region;
+            
+            // Create Wikipedia URL
+            const wikiUrl = createWikipediaUrl(event.language || 'sv', event.title);
+            
             return `
                 <div class="event-card">
                     <div>
                         <span class="event-year">${event.year}</span>
                         <span class="event-title">${event.title.substring(event.year.toString().length + 2)}</span>
-                        <span class="region-badge region-${event.region}">${event.region}</span>
+                        <span class="region-badge region-${event.region}">${regionName}</span>
                     </div>
                     <div class="event-description">${event.description}</div>
-                    <div class="event-source">Källa: ${event.source}</div>
+                    <div class="event-source">Källa: <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer">${event.source || 'Wikipedia'}</a></div>
                 </div>
             `;
         }
@@ -284,6 +323,8 @@
                         <p>Tekniska detaljer: ${error.message}</p>
                     </div>
                 `;
+                // Show demo events as fallback
+                showDemoEvents();
             }
         }
         
@@ -292,35 +333,39 @@
             const dateInfo = getCurrentDateInfo();
             document.getElementById('currentDate').textContent = dateInfo.display;
             
-            // Example events for demonstration
+            // Example events for demonstration - all in Swedish
             const demoEvents = [
                 {
                     year: 1781,
                     title: "1781: William Herschel upptäcker planeten Uranus",
                     description: "Den tysk-brittiske astronomen William Herschel 'officiellt' upptäcker planeten Uranus. Den har tidigare observerats av andra astronomer, men har dittills misstolkats som en stjärna. Med den svenske astronomen Eric Prosperins hjälp räknar man ut att himlakroppen har en nästan cirkelformad omloppsbana och att den därför måste vara en planet.",
                     source: "Wikipedia (sv)",
-                    region: "Sweden"
+                    region: "Sweden",
+                    language: "sv"
                 },
                 {
                     year: 1940,
                     title: "1940: Finska vinterkriget avslutas",
                     description: "Sedan Finland och Sovjetunionen föregående dag har undertecknat ett fredsavtal avslutas finska vinterkriget, som utbröt 30 november 1939, klockan 11.00. Finland tvingas i freden avträda stora landområden, däribland betydande delar av Karelen.",
                     source: "Wikipedia (sv)",
-                    region: "Nordic"
+                    region: "Nordic",
+                    language: "sv"
                 },
                 {
                     year: 1894,
                     title: "1894: Världens första stripteaseshow äger rum",
                     description: "Världens första stripteaseshow äger rum på varietéteatern Divan Fayonau i Paris. Föreställningen heter Le Coucher d'Yvette och visar hur en flicka klär av sig inför sitt sänggående.",
                     source: "Wikipedia (sv)",
-                    region: "Europe"
+                    region: "Europe",
+                    language: "sv"
                 },
                 {
                     year: 251,
                     title: "251: Cornelius väljs till påve",
                     description: "Sedan Fabianus har avlidit föregående år, väljs Cornelius till påve (denna dag, 6 eller 11 mars).",
                     source: "Wikipedia (sv)",
-                    region: "Global"
+                    region: "Global",
+                    language: "sv"
                 }
             ];
             
@@ -337,6 +382,34 @@
                 showDemoEvents();
             });
         });
+        
+        // Generate HTML content for email newsletter
+        function generateNewsletterContent() {
+            // This function can be called to generate HTML for including in a newsletter
+            const dateInfo = getCurrentDateInfo();
+            const todaysEvents = filterEventsForDate(allEvents, dateInfo.month, dateInfo.day);
+            
+            let htmlContent = `
+                <h2>Historiska händelser - ${dateInfo.display}</h2>
+                <p>Här är några positiva historiska händelser som inträffade på denna dag:</p>
+            `;
+            
+            // Include top 3 events
+            const topEvents = todaysEvents.slice(0, 3);
+            topEvents.forEach(event => {
+                htmlContent += `
+                    <div style="margin-bottom: 15px;">
+                        <strong>${event.year}:</strong> ${event.description}
+                    </div>
+                `;
+            });
+            
+            htmlContent += `
+                <p>Se fler historiska händelser på <a href="https://today.gladstart.com" target="_blank">today.gladstart.com</a>!</p>
+            `;
+            
+            return htmlContent;
+        }
     </script>
 </body>
 </html>
